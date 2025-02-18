@@ -3,6 +3,7 @@ package finder
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Mode string
@@ -16,7 +17,7 @@ const (
 type Finder struct {
 	dirs     []string
 	patterns []string
-	files    map[string]os.FileInfo
+	files    map[string]Info
 	excludes []string
 	mode     Mode
 }
@@ -25,7 +26,7 @@ type Finder struct {
 func New() *Finder {
 	return &Finder{
 		mode:  ModeAll,
-		files: make(map[string]os.FileInfo),
+		files: make(map[string]Info),
 	}
 }
 
@@ -85,13 +86,13 @@ func (f *Finder) Exclude(patterns ...string) *Finder {
 }
 
 // Get Retrieves the search results.
-func (f *Finder) Get() map[string]os.FileInfo {
+func (f *Finder) Get() map[string]Info {
 	f.search()
 	return f.files
 }
 
 func (f *Finder) search() *Finder {
-	f.files = make(map[string]os.FileInfo)
+	f.files = make(map[string]Info)
 
 	for _, dir := range f.dirs {
 		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -102,7 +103,12 @@ func (f *Finder) search() *Finder {
 			if !f.matchesPattern(path, f.excludes) &&
 				f.matchesPattern(path, f.patterns) &&
 				(f.mode == ModeAll || (f.mode == ModeDir && info.IsDir()) || (f.mode == ModeFile && !info.IsDir())) {
-				f.files[path] = info
+				f.files[path] = Info{
+					Path:     path,
+					FileInfo: info,
+					Ext:      filepath.Ext(path),
+					Name:     strings.Replace(info.Name(), filepath.Ext(path), "", 1),
+				}
 			}
 			return nil
 		})
