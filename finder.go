@@ -3,6 +3,7 @@ package finder
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -93,7 +94,7 @@ func (f *Finder) Get() map[string]Info {
 
 // Match Retrieves the search results with match patterns.
 func (f *Finder) Match(patterns ...string) map[string]Info {
-	var res map[string]Info
+	res := make(map[string]Info)
 	for s, i := range f.Get() {
 		if Match(s, patterns...) {
 			res[s] = i
@@ -140,7 +141,7 @@ func (f *Finder) matchesPattern(file string, patterns []string) bool {
 
 func Match(name string, patterns ...string) bool {
 	for _, pattern := range patterns {
-		if matched, _ := filepath.Match(pattern, name); matched {
+		if matched, _ := regexp.MatchString(pattern+"$", name); matched {
 			return true
 		}
 	}
