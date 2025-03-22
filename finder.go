@@ -91,6 +91,18 @@ func (f *Finder) Get() map[string]Info {
 	return f.files
 }
 
+// Match Retrieves the search results with match patterns.
+func (f *Finder) Match(patterns ...string) map[string]Info {
+	var res map[string]Info
+	for s, i := range f.Get() {
+		if Match(s, patterns...) {
+			res[s] = i
+		}
+	}
+
+	return res
+}
+
 func (f *Finder) search() *Finder {
 	f.files = make(map[string]Info)
 
@@ -120,6 +132,15 @@ func (f *Finder) matchesPattern(file string, patterns []string) bool {
 	for _, pattern := range patterns {
 		match, _ := filepath.Match(pattern, filepath.Base(file))
 		if match {
+			return true
+		}
+	}
+	return false
+}
+
+func Match(name string, patterns ...string) bool {
+	for _, pattern := range patterns {
+		if matched, _ := filepath.Match(pattern, name); matched {
 			return true
 		}
 	}

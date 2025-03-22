@@ -25,7 +25,7 @@ go get -u github.com/gouef/finder
 
 ## Usage
 
-### Basic FIle and Directory Search
+### Basic File and Directory Search
 
 ```go
 package main
@@ -101,6 +101,24 @@ func main() {
 	}
 }
 
+```
+
+## Global Function
+
+### Match
+Extending `filepath.Match`, but yout can use multiple patterns.
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/gouef/finder"
+)
+
+func main() {
+    files := finder.FindFiles("*.go").In(".").Exclude("main.go").Get()
+}
 ```
 
 
