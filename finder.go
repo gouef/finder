@@ -1,6 +1,9 @@
 package finder
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -49,6 +52,32 @@ func FindDirectories(patterns ...string) *Finder {
 // In Specifies the directories to search in.
 func In(dirs ...string) *Finder {
 	return New().In(dirs...)
+}
+
+func DirectoryHash(path string) (string, error) {
+	files := In(path).Get()
+	md5 := md5.New()
+
+	for p, _ := range files {
+		relPath, err := filepath.Rel(path, p)
+		if err != nil {
+			return "", err
+		}
+		md5.Write([]byte(relPath))
+
+		f, err := os.Open(p)
+		if err != nil {
+			return "", err
+		}
+		defer f.Close()
+
+		_, err = io.Copy(md5, f)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return hex.EncodeToString(md5.Sum(nil)), nil
 }
 
 // In Specifies the directories to search in.

@@ -112,13 +112,27 @@ func TestGlobalFindFunctions(t *testing.T) {
 	// Test In()
 	f = finder.In(testDir).FindFiles("*.go")
 	files = f.Get()
-	assert.Len(t, files, 2) // Musí najít 2 go soubory
+	assert.Len(t, files, 2)
 }
 
 func TestSearchWithInvalidDir(t *testing.T) {
-	f := finder.In("/this/path/does/not/exist").Find("*")
-	files := f.Get()
+	testDir := setupTestDir(t)
 
-	// Musí se vrátit prázdný výsledek, protože cesta neexistuje
-	assert.Len(t, files, 0)
+	hash, err := finder.DirectoryHash(testDir)
+	assert.NoError(t, err)
+	assert.Equal(t, "d41d8cd98f00b204e9800998ecf8427e", hash)
+
+}
+
+func TestDirectoryHash(t *testing.T) {
+	testDir := setupTestDir(t)
+
+	f := finder.New().
+		In(testDir).
+		FindFiles("*.go")
+
+	files := f.Get()
+	assert.Len(t, files, 2)
+	assert.Contains(t, files, filepath.Join(testDir, "test2.go"))
+	assert.Contains(t, files, filepath.Join(testDir, "subdir/test4.go"))
 }

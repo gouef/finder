@@ -121,6 +121,26 @@ func main() {
 }
 ```
 
+### DirectoryHash(path string) (string, error)
+Get hash (md5) for directory, good for checking if something was changed.
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/gouef/finder"
+)
+
+func main() {
+	hash, err := finder.DirectoryHash("./directory")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	fmt.Println("MD5 hash of directory:", hash)
+}
+```
 
 ## Contributing
 
