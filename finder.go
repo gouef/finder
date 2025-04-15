@@ -55,26 +55,50 @@ func In(dirs ...string) *Finder {
 }
 
 func DirectoryHash(path string) (string, error) {
-	files := In(path).Get()
 	md5 := md5.New()
 
-	for p, _ := range files {
-		relPath, err := filepath.Rel(path, p)
-		if err != nil {
-			return "", err
-		}
-		md5.Write([]byte(relPath))
+	files, err := DirectoryFilesHash(path)
 
-		f, err := os.Open(p)
-		if err != nil {
-			return "", err
-		}
-		defer f.Close()
+	if err != nil {
+		return "", err
+	}
 
-		_, err = io.Copy(md5, f)
-		if err != nil {
-			return "", err
+	for _, hash := range files {
+		md5.Write([]byte(hash))
+	}
+
+	return hex.EncodeToString(md5.Sum(nil)), nil
+}
+
+func DirectoryFilesHash(path string) (map[string]string, error) {
+	files := Find("*").In(path).Get()
+	result := make(map[string]string)
+
+	for p, i := range files {
+		if i.FileInfo.IsDir() {
+			continue
 		}
+		fileHash, err := FileHash(p)
+		if err != nil {
+			return result, err
+		}
+		result[p] = fileHash
+	}
+
+	return result, nil
+}
+
+func FileHash(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	md5 := md5.New()
+	_, err = io.Copy(md5, f)
+	if err != nil {
+		return "", err
 	}
 
 	return hex.EncodeToString(md5.Sum(nil)), nil

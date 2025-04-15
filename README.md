@@ -142,6 +142,53 @@ func main() {
 }
 ```
 
+### DirectoryFilesHash(path string) (map[string]string, error)
+Get hashes (md5) for every file in directory
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/gouef/finder"
+)
+
+func main() {
+	hashes, err := finder.DirectoryFilesHash("./directory")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	
+	for filePath, fileHash := range hashes {
+		fmt.Println("MD5 hash of file:", filePath, " ", fileHash)
+	}
+}
+```
+
+### FileHash(path string) (string, error)
+Get hash (md5) for single file
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/gouef/finder"
+)
+
+func main() {
+	hash, err := finder.FileHash("./directory/file.txt")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	
+    fmt.Println("MD5 hash of file:", hash)
+}
+```
+
+
 ## Contributing
 
 Read [Contributing](CONTRIBUTING.md)

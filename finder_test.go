@@ -1,12 +1,10 @@
-package tests
+package finder
 
 import (
+	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/gouef/finder"
-	"github.com/stretchr/testify/assert"
 )
 
 func setupTestDir(t *testing.T) string {
@@ -33,7 +31,7 @@ func setupTestDir(t *testing.T) string {
 func TestFindFiles(t *testing.T) {
 	testDir := setupTestDir(t)
 
-	f := finder.New().
+	f := New().
 		In(testDir).
 		FindFiles("*.go")
 
@@ -46,7 +44,7 @@ func TestFindFiles(t *testing.T) {
 func TestFindDirectories(t *testing.T) {
 	testDir := setupTestDir(t)
 
-	f := finder.New().
+	f := New().
 		In(testDir).
 		FindDirectories("*")
 
@@ -59,7 +57,7 @@ func TestFindDirectories(t *testing.T) {
 func TestExcludeFiles(t *testing.T) {
 	testDir := setupTestDir(t)
 
-	f := finder.New().
+	f := New().
 		In(testDir).
 		FindFiles("*.txt").
 		Exclude("test1.txt")
@@ -72,7 +70,7 @@ func TestExcludeFiles(t *testing.T) {
 func TestFindAll(t *testing.T) {
 	testDir := setupTestDir(t)
 
-	f := finder.New().
+	f := New().
 		In(testDir).
 		Find("*")
 
@@ -83,7 +81,7 @@ func TestFindAll(t *testing.T) {
 func TestEmptyResult(t *testing.T) {
 	testDir := setupTestDir(t)
 
-	f := finder.New().
+	f := New().
 		In(testDir).
 		FindFiles("*.cpp") // Neexistují žádné C++ soubory
 
@@ -95,22 +93,22 @@ func TestGlobalFindFunctions(t *testing.T) {
 	testDir := setupTestDir(t)
 
 	// Test Find()
-	f := finder.Find("*").In(testDir)
+	f := Find("*").In(testDir)
 	all := f.Get()
 	assert.GreaterOrEqual(t, len(all), 5) // Musí najít vše
 
 	// Test FindFiles()
-	f = finder.FindFiles("*.txt").In(testDir)
+	f = FindFiles("*.txt").In(testDir)
 	files := f.Get()
 	assert.Len(t, files, 2) // Musí najít 2 txt soubory
 
 	// Test FindDirectories()
-	f = finder.FindDirectories("*").In(testDir)
+	f = FindDirectories("*").In(testDir)
 	dirs := f.Get()
 	assert.GreaterOrEqual(t, len(dirs), 2) // subdir + nested
 
 	// Test In()
-	f = finder.In(testDir).FindFiles("*.go")
+	f = In(testDir).FindFiles("*.go")
 	files = f.Get()
 	assert.Len(t, files, 2)
 }
@@ -118,16 +116,7 @@ func TestGlobalFindFunctions(t *testing.T) {
 func TestSearchWithInvalidDir(t *testing.T) {
 	testDir := setupTestDir(t)
 
-	hash, err := finder.DirectoryHash(testDir)
-	assert.NoError(t, err)
-	assert.Equal(t, "d41d8cd98f00b204e9800998ecf8427e", hash)
-
-}
-
-func TestDirectoryHash(t *testing.T) {
-	testDir := setupTestDir(t)
-
-	f := finder.New().
+	f := New().
 		In(testDir).
 		FindFiles("*.go")
 
@@ -135,4 +124,14 @@ func TestDirectoryHash(t *testing.T) {
 	assert.Len(t, files, 2)
 	assert.Contains(t, files, filepath.Join(testDir, "test2.go"))
 	assert.Contains(t, files, filepath.Join(testDir, "subdir/test4.go"))
+}
+
+func TestDirectoryHash(t *testing.T) {
+	testDir := setupTestDir(t)
+
+	hash, err := DirectoryHash(testDir)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "48561ed4e00b7e9393acbdc4aff47155", hash)
+
 }
