@@ -19,32 +19,32 @@ const (
 )
 
 type Finder struct {
-	dirs     []string
-	patterns []string
-	files    map[string]Info
-	excludes []string
-	mode     Mode
+	Dirs     []string
+	Patterns []string
+	Files    map[string]Info
+	Excludes []string
+	Mode     Mode
 }
 
 // New  Creates a new instance of Finder.
 func New() *Finder {
 	return &Finder{
-		mode:  ModeAll,
-		files: make(map[string]Info),
+		Mode:  ModeAll,
+		Files: make(map[string]Info),
 	}
 }
 
-// Find Searches for both files and directories based on the given patterns.
+// Find Searches for both Files and directories based on the given Patterns.
 func Find(patterns ...string) *Finder {
 	return New().Find(patterns...)
 }
 
-// FindFiles Searches only for files matching the given patterns.
+// FindFiles Searches only for Files matching the given Patterns.
 func FindFiles(patterns ...string) *Finder {
 	return New().FindFiles(patterns...)
 }
 
-// FindDirectories Searches only for directories matching the given patterns.
+// FindDirectories Searches only for directories matching the given Patterns.
 func FindDirectories(patterns ...string) *Finder {
 	return New().FindDirectories(patterns...)
 }
@@ -106,46 +106,46 @@ func FileHash(path string) (string, error) {
 
 // In Specifies the directories to search in.
 func (f *Finder) In(dirs ...string) *Finder {
-	f.dirs = append(f.dirs, dirs...)
+	f.Dirs = append(f.Dirs, dirs...)
 	return f
 }
 
-// Find Searches for both files and directories based on the given patterns.
+// Find Searches for both Files and directories based on the given Patterns.
 func (f *Finder) Find(patterns ...string) *Finder {
-	f.patterns = append(f.patterns, patterns...)
-	f.mode = ModeAll
+	f.Patterns = append(f.Patterns, patterns...)
+	f.Mode = ModeAll
 	return f
 }
 
-// FindFiles Searches only for files matching the given patterns.
+// FindFiles Searches only for Files matching the given Patterns.
 func (f *Finder) FindFiles(patterns ...string) *Finder {
-	f.patterns = append(f.patterns, patterns...)
-	f.mode = ModeFile
+	f.Patterns = append(f.Patterns, patterns...)
+	f.Mode = ModeFile
 
 	return f
 }
 
-// FindDirectories Searches only for directories matching the given patterns.
+// FindDirectories Searches only for directories matching the given Patterns.
 func (f *Finder) FindDirectories(patterns ...string) *Finder {
-	f.patterns = append(f.patterns, patterns...)
-	f.mode = ModeDir
+	f.Patterns = append(f.Patterns, patterns...)
+	f.Mode = ModeDir
 
 	return f
 }
 
-// Exclude Excludes files and directories matching the given patterns from the search results.
+// Exclude Excludes Files and directories matching the given Patterns from the search results.
 func (f *Finder) Exclude(patterns ...string) *Finder {
-	f.excludes = append(f.excludes, patterns...)
+	f.Excludes = append(f.Excludes, patterns...)
 	return f
 }
 
 // Get Retrieves the search results.
 func (f *Finder) Get() map[string]Info {
 	f.search()
-	return f.files
+	return f.Files
 }
 
-// Match Retrieves the search results with match patterns.
+// Match Retrieves the search results with match Patterns.
 func (f *Finder) Match(patterns ...string) map[string]Info {
 	res := make(map[string]Info)
 	for s, i := range f.Get() {
@@ -158,18 +158,18 @@ func (f *Finder) Match(patterns ...string) map[string]Info {
 }
 
 func (f *Finder) search() *Finder {
-	f.files = make(map[string]Info)
+	f.Files = make(map[string]Info)
 
-	for _, dir := range f.dirs {
+	for _, dir := range f.Dirs {
 		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
 
-			if !f.matchesPattern(path, f.excludes) &&
-				f.matchesPattern(path, f.patterns) &&
-				(f.mode == ModeAll || (f.mode == ModeDir && info.IsDir()) || (f.mode == ModeFile && !info.IsDir())) {
-				f.files[path] = Info{
+			if !f.matchesPattern(path, f.Excludes) &&
+				f.matchesPattern(path, f.Patterns) &&
+				(f.Mode == ModeAll || (f.Mode == ModeDir && info.IsDir()) || (f.Mode == ModeFile && !info.IsDir())) {
+				f.Files[path] = Info{
 					Path:     path,
 					FileInfo: info,
 					Ext:      filepath.Ext(path),
