@@ -196,7 +196,7 @@ func (f *Finder) search() *Finder {
 				return f
 			}
 			for _, entry := range entries {
-				path := entry.Name()
+				path := filepath.Join(dir, entry.Name())
 				info, err := entry.Info()
 
 				if err != nil {

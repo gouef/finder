@@ -66,8 +66,7 @@ func TestFindFilesNoRecursive(t *testing.T) {
 	assert.Len(t, files, 1)
 	log.Println("Files: ", files)
 	assert.NotContains(t, files, filepath.Join(testDir, "test1.txt"))
-	assert.Contains(t, files, "test2.go")
-	assert.NotContains(t, files, filepath.Join(testDir, "test2.go"))
+	assert.Contains(t, files, filepath.Join(testDir, "test2.go"))
 	assert.NotContains(t, files, filepath.Join(testDir, "subdir/test4.go"))
 }
 
