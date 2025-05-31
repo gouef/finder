@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -19,18 +20,20 @@ const (
 )
 
 type Finder struct {
-	Dirs     []string
-	Patterns []string
-	Files    map[string]Info
-	Excludes []string
-	Mode     Mode
+	Dirs             []string
+	Patterns         []string
+	Files            map[string]*Info
+	Excludes         []string
+	Mode             Mode
+	EnabledRecursive bool
 }
 
 // New  Creates a new instance of Finder.
 func New() *Finder {
 	return &Finder{
-		Mode:  ModeAll,
-		Files: make(map[string]Info),
+		Mode:             ModeAll,
+		Files:            make(map[string]*Info),
+		EnabledRecursive: true,
 	}
 }
 
@@ -104,6 +107,16 @@ func FileHash(path string) (string, error) {
 	return hex.EncodeToString(md5.Sum(nil)), nil
 }
 
+func (f *Finder) Recursive() *Finder {
+	f.EnabledRecursive = true
+	return f
+}
+
+func (f *Finder) NotRecursive() *Finder {
+	f.EnabledRecursive = false
+	return f
+}
+
 // In Specifies the directories to search in.
 func (f *Finder) In(dirs ...string) *Finder {
 	f.Dirs = append(f.Dirs, dirs...)
@@ -140,14 +153,14 @@ func (f *Finder) Exclude(patterns ...string) *Finder {
 }
 
 // Get Retrieves the search results.
-func (f *Finder) Get() map[string]Info {
+func (f *Finder) Get() map[string]*Info {
 	f.search()
 	return f.Files
 }
 
 // Match Retrieves the search results with match Patterns.
-func (f *Finder) Match(patterns ...string) map[string]Info {
-	res := make(map[string]Info)
+func (f *Finder) Match(patterns ...string) map[string]*Info {
+	res := make(map[string]*Info)
 	for s, i := range f.Get() {
 		if Match(s, patterns...) {
 			res[s] = i
@@ -158,28 +171,63 @@ func (f *Finder) Match(patterns ...string) map[string]Info {
 }
 
 func (f *Finder) search() *Finder {
-	f.Files = make(map[string]Info)
+	f.Files = make(map[string]*Info)
 
 	for _, dir := range f.Dirs {
-		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
 
-			if !f.matchesPattern(path, f.Excludes) &&
-				f.matchesPattern(path, f.Patterns) &&
-				(f.Mode == ModeAll || (f.Mode == ModeDir && info.IsDir()) || (f.Mode == ModeFile && !info.IsDir())) {
-				f.Files[path] = Info{
-					Path:     path,
-					FileInfo: info,
-					Ext:      filepath.Ext(path),
-					Name:     strings.Replace(info.Name(), filepath.Ext(path), "", 1),
+		if f.EnabledRecursive {
+			filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+
+				i := f.createInfo(path, info)
+
+				if i != nil {
+					f.Files[path] = i
+				}
+
+				return nil
+			})
+		} else {
+			entries, err := os.ReadDir(dir)
+			if err != nil {
+				log.Println("error while reading dir:", err)
+				return f
+			}
+			for _, entry := range entries {
+				path := entry.Name()
+				info, err := entry.Info()
+
+				if err != nil {
+					return f
+				}
+
+				i := f.createInfo(path, info)
+
+				if i != nil {
+					f.Files[path] = i
 				}
 			}
-			return nil
-		})
+		}
 	}
 	return f
+}
+
+func (f Finder) createInfo(path string, info os.FileInfo) *Info {
+
+	if !f.matchesPattern(path, f.Excludes) &&
+		f.matchesPattern(path, f.Patterns) &&
+		(f.Mode == ModeAll || (f.Mode == ModeDir && info.IsDir()) || (f.Mode == ModeFile && !info.IsDir())) {
+		return &Info{
+			Path:     path,
+			FileInfo: info,
+			Ext:      filepath.Ext(path),
+			Name:     strings.Replace(info.Name(), filepath.Ext(path), "", 1),
+		}
+	}
+
+	return nil
 }
 
 func (f *Finder) matchesPattern(file string, patterns []string) bool {

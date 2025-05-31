@@ -2,6 +2,7 @@ package finder
 
 import (
 	"github.com/stretchr/testify/assert"
+	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -39,6 +40,35 @@ func TestFindFiles(t *testing.T) {
 	assert.Len(t, files, 2)
 	assert.Contains(t, files, filepath.Join(testDir, "test2.go"))
 	assert.Contains(t, files, filepath.Join(testDir, "subdir/test4.go"))
+}
+
+func TestFindFilesRecursive(t *testing.T) {
+	testDir := setupTestDir(t)
+
+	f := New().
+		In(testDir).
+		FindFiles("*.go").Recursive()
+
+	files := f.Get()
+	assert.Len(t, files, 2)
+	assert.Contains(t, files, filepath.Join(testDir, "test2.go"))
+	assert.Contains(t, files, filepath.Join(testDir, "subdir/test4.go"))
+}
+
+func TestFindFilesNoRecursive(t *testing.T) {
+	testDir := setupTestDir(t)
+
+	f := New().
+		In(testDir).
+		FindFiles("*.go").NotRecursive()
+
+	files := f.Get()
+	assert.Len(t, files, 1)
+	log.Println("Files: ", files)
+	assert.NotContains(t, files, filepath.Join(testDir, "test1.txt"))
+	assert.Contains(t, files, "test2.go")
+	assert.NotContains(t, files, filepath.Join(testDir, "test2.go"))
+	assert.NotContains(t, files, filepath.Join(testDir, "subdir/test4.go"))
 }
 
 func TestFindDirectories(t *testing.T) {
